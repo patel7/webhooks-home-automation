@@ -18,7 +18,4 @@ In order to run this app:
 http://localhost:12000
 ```
 
-- Used in conjunction with the follow IFTTT recipe
-```
-https://ifttt.com/applets/49465061d-log-everything-plex-plays
-```
+- Used in conjunction with the follow IFTTT recipe: https://ifttt.com/applets/49465061d-log-everything-plex-plays
