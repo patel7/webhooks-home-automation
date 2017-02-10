@@ -13,7 +13,7 @@ In order to run this app:
  ```
 
 - Add the webhook to https://app.plex.tv/web/app#!/account/webhooks
-
+- In this case the webhook woudl be:
 ```
-in this case the webhook would be http://localhost:12000
+http://localhost:12000
 ```
