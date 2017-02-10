@@ -5,31 +5,61 @@ var express = require('express')
 var app = express();
 var upload = multer({ dest: '/tmp/' });
 
+var key = '';
+
 app.post('/', upload.single('thumb'), function (req, res, next) {
   var payload = JSON.parse(req.body.payload);
-  console.log('Got webhook for', payload.event);
+  //console.log('Got webhook for', payload.event);
 
-  // Apple TV.
-  if (payload.Player.uuid == process.env.PLAYER && payload.Metadata.type != 'track') {
-    var options = {
-      method: 'PUT',
-      json: true,
-      url: 'https://winkapi.quirky.com/light_bulbs/' + process.env.BULB,
-      headers: { 'Authorization': 'Bearer ' + process.env.BEARER }
-    };
+  var options = {
+    method: 'PUT',
+    json: true,
+  };
 
-    if (payload.event == 'media.play' || payload.event == 'media.resume') {
-      // Turn light off.
-      console.log('Turning light off.');
-      options.body = { desired_state: { powered: false } };
-      request(options);
-    } else if (payload.event == 'media.pause' || payload.event == 'media.stop') {
-      // Turn light on.
-      console.log('Turning light on.');
-      options.body = { desired_state: { powered: true, brightness: 1.0 } };
-      request(options);
-    }
+  //Ensure IFTTT's Maker channel is set to digest Plex.Play, Plex.Resume, .. events
+  //If you want to control lights in particular 'Plex Rooms' you can look into payload.Player.title to send a customer event based on the player (ensure you have a unique name for each player configured in Plex).
+  switch (payload.event) {
+  case 'media.play':
+    // Trigger IFTTT_Plex.Play
+    //console.log('IFTTT_Plex.Play');
+    options.url = 'https://maker.ifttt.com/trigger/Plex.Play/with/key/' + key;
+    //options.body = { value1: payload.Account.title, value2: payload.Metadata.title, value3: payload.Player.title };
+    //request(options);
+    break;
+  case 'media.resume':
+    // Trigger IFTTT_Plex.Resume
+    //console.log('IFTTT_Plex.Resume');
+    options.url = 'https://maker.ifttt.com/trigger/Plex.Resume/with/key/' + key;
+    //request(options);
+    break;
+  case 'media.pause':
+    // Trigger IFTTT_Plex.Pause
+    //console.log('IFTTT_Plex.Pause');
+    options.url = 'https://maker.ifttt.com/trigger/Plex.Pause/with/key/' + key;
+    //request(options);
+    break;
+  case 'media.stop':
+    // Trigger IFTTT_Plex.Stop
+    //console.log('IFTTT_Plex.Stop');
+    options.url = 'https://maker.ifttt.com/trigger/Plex.Stop/with/key/' + key;
+    //request(options);
+    break;
   }
+
+  switch (payload.Metadata.librarySectionType) {
+    case 'show':
+      options.body = { value1: payload.Account.title, value2: payload.Player.title, value3: (payload.Metadata.grandparentTitle + ' - ' + payload.Metadata.title) };
+      break;
+    case 'movie':
+      options.body = { value1: payload.Account.title, value2: payload.Player.title, value3: payload.Metadata.title };
+      break;
+    case 'artist':
+      options.body = { value1: payload.Account.title, value2: payload.Player.title, value3: (payload.Metadata.grandparentTitle + ' - ' + payload.Metadata.parentTitle + ' - ' + payload.Metadata.title) };
+      break;
+    default:
+  }
+
+  request(options);
 
   res.sendStatus(200);
 });
